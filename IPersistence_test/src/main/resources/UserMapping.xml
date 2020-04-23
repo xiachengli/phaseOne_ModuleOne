@@ -1,0 +1,7 @@
+<mapper namespace="com.xcl.dao.UserDao">
+
+    <select id="selectList" resultType="com.xcl.pojo.User" parameterType="com.xcl.pojo.User">
+        select * from user
+    </select>
+
+</mapper>
