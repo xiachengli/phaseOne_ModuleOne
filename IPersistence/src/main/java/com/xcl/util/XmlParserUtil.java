@@ -9,11 +9,7 @@ import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
 
 import java.beans.PropertyVetoException;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,11 +51,11 @@ public class XmlParserUtil {
      * @param mappers
      * @return
      */
-    private static void parseMapper(Configuration configuration,List<Element> mappers) throws DocumentException {
+    private static void parseMapper(Configuration configuration,List<Element> mappers){
         for (Element e : mappers) {
             System.out.println(e);
             String pathName = e.attributeValue("location");
-            System.out.println(pathName);
+           // System.out.println(pathName);
             try {
                 InputStream is = XmlParserUtil.class.getClassLoader().getResourceAsStream(pathName);
                // InputStream is = new FileInputStream(new File(pathName));
@@ -70,25 +66,22 @@ public class XmlParserUtil {
 
                 List<Element> selectList = root.selectNodes("//select");
                 for (Element element : selectList) {
-                    //id
-                    String id = element.attributeValue("id");
-                    //返回值类型
-                    String resultType = element.attributeValue("resultType");
-                    //参数类型
-                    String parameterType = element.attributeValue("parameterType");
-                    //sql语句
-                    String sql = element.getTextTrim();
+                  parseNode(configuration,namespace,element,"select");
+                }
 
-                    MapperStatement mapperStatement = new MapperStatement();
-                    mapperStatement.setId(id);
-                    mapperStatement.setResultType(resultType);
-                    mapperStatement.setParameterType(parameterType);
-                    mapperStatement.setSql(sql);
+                List<Element> updateList = root.selectNodes("//update");
+                for (Element element : updateList) {
+                    parseNode(configuration,namespace,element,"update");
+                }
 
-                    //sql语句的唯一标识
-                    String statementId = namespace+"."+id;
+                List<Element> deleteList = root.selectNodes("//delete");
+                for (Element element : deleteList) {
+                    parseNode(configuration,namespace,element,"delete");
+                }
 
-                    configuration.getMapperStatements().put(statementId,mapperStatement);
+                List<Element> insertList = root.selectNodes("//insert");
+                for (Element element : insertList) {
+                    parseNode(configuration,namespace,element,"insert");
                 }
 
 
@@ -96,5 +89,28 @@ public class XmlParserUtil {
                 ex.printStackTrace();
             }
         }
+    }
+
+    private static void parseNode(Configuration configuration, String namespace, Element element,String sqlCommandType) {
+        //id
+        String id = element.attributeValue("id");
+        //返回值类型
+        String resultType = element.attributeValue("resultType");
+        //参数类型
+        String parameterType = element.attributeValue("parameterType");
+        //sql语句
+        String sql = element.getTextTrim();
+
+        MapperStatement mapperStatement = new MapperStatement();
+        mapperStatement.setId(id);
+        mapperStatement.setResultType(resultType);
+        mapperStatement.setParameterType(parameterType);
+        mapperStatement.setSql(sql);
+        mapperStatement.setSqlCommand(sqlCommandType);
+
+        //sql语句的唯一标识
+        String statementId = namespace+"."+id;
+
+        configuration.getMapperStatements().put(statementId,mapperStatement);
     }
 }

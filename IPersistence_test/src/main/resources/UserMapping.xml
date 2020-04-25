@@ -1,7 +1,18 @@
-<mapper namespace="com.xcl.dao.UserDao">
+<mapper namespace="com.xcl.mapper.UserMapper">
 
-    <select id="selectList" resultType="com.xcl.pojo.User" parameterType="com.xcl.pojo.User">
+    <select id="selectList" resultType="com.xcl.pojo.User">
         select * from user
     </select>
 
+    <update id="updateById" resultType="java.lang.Integer" parameterType="com.xcl.pojo.User">
+        update user set username = #{username} where id = #{id}
+    </update>
+
+    <insert id="insert" resultType="java.lang.Integer" parameterType="com.xcl.pojo.User">
+        INSERT INTO `user` VALUES(#{id},#{username},#{password},#{birthday})
+    </insert>
+
+    <delete id="deleteById" resultType="java.lang.Integer" parameterType="com.xcl.pojo.User">
+        DELETE FROM `user` WHERE id=#{id}
+    </delete>
 </mapper>

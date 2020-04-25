@@ -1,8 +1,7 @@
-package com.xcl.factory;
+package com.xcl.session;
 
 import com.xcl.pojo.Configuration;
-import com.xcl.service.imp.DefaultSqlSession;
-import com.xcl.service.SqlSession;
+import com.xcl.session.imp.DefaultSqlSession;
 import com.xcl.util.XmlParserUtil;
 import org.dom4j.DocumentException;
 

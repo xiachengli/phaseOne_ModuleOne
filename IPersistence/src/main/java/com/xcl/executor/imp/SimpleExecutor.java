@@ -1,15 +1,14 @@
-package com.xcl.service.imp;
+package com.xcl.executor.imp;
 
+import com.xcl.executor.Executor;
 import com.xcl.pojo.Configuration;
 import com.xcl.pojo.MapperStatement;
-import com.xcl.service.Executor;
 import com.xcl.util.GenericTokenParser;
 import com.xcl.util.ParameterMapping;
 import com.xcl.util.ParameterMappingTokenHandler;
 
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.*;
 import java.util.ArrayList;
@@ -22,40 +21,32 @@ import java.util.Map;
  */
 public class SimpleExecutor implements Executor {
 
+    private Configuration configuration;
+
+    public SimpleExecutor(Configuration configuration){
+        this.configuration = configuration;
+    }
+
+    private  Connection getConnection() throws SQLException {
+        return configuration.getDataSource().getConnection();
+    }
+
     @Override
-    public <E> List<E> queryList(Configuration configuration, MapperStatement mapperStatement, Object... params){
+    public <E> List<E> selectList(MapperStatement mapperStatement, Object... params){
         //结果集
         List<E> results = new ArrayList<>();
+        Connection connection = null;
         try {
             //获取连接
-            Connection connnection = configuration.getDataSource().getConnection();
+            connection = getConnection();
             //sql语句
             String sql = mapperStatement.getSql();
 
             //将sql解析为jdbc认识的格式：jdbc支持?占位符，而我们自定义使用#{}
             Map<String,Object> boundSql = getBoundSql(sql);
             sql = (String)boundSql.get("sql");
-            List<ParameterMapping> parameterMappings = (List<ParameterMapping>)boundSql.get("parameterMappings");
 
-            PreparedStatement preparedStatement = connnection.prepareStatement(sql);
-
-            //通过参数类型(约定：写类的全限定名以便通过反射获取Class信息)获取参数类型的Class
-            String  parameterType = mapperStatement.getParameterType();
-            Class parameterClass = Class.forName(parameterType);
-            //设置preparedStatement参数
-            for (int i=0; i<parameterMappings.size(); i++) {
-                ParameterMapping temp = parameterMappings.get(i);
-                //反射：获取类的指定字段
-                Field declaredField = parameterClass.getDeclaredField(temp.getContent());
-                //取消安全检查，以便访问私有属性或方法
-                declaredField.setAccessible(true);
-
-                //我不是很理解这个params[0]
-                Object value = declaredField.get(params[0]);
-
-                preparedStatement.setObject(i+1,value);
-
-            }
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
             ResultSet resultSet = preparedStatement.executeQuery();
             //通过返回值类型(约定：写类的全限定名以便通过反射获取Class信息)获取返回类型的Class
@@ -67,8 +58,72 @@ public class SimpleExecutor implements Executor {
 
             } catch (Exception e) {
               e.printStackTrace();
+        }finally {
+            if (connection != null){
+                try {
+                    connection.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            }
         }
         return results;
+    }
+
+    @Override
+    public int insert(MapperStatement mapperStatement, Object[] params) throws SQLException {
+        PreparedStatement preparedStatement = execute(mapperStatement,params);
+        return preparedStatement.execute() ? 1 : 0;
+    }
+
+    @Override
+    public int updateById(MapperStatement mapperStatement, Object[] params) throws SQLException {
+        PreparedStatement preparedStatement = execute(mapperStatement,params);
+        return preparedStatement.execute() ? 1 : 0;
+    }
+
+    @Override
+    public int deleteById(MapperStatement mapperStatement, Object[] params) throws SQLException {
+        PreparedStatement preparedStatement = execute(mapperStatement,params);
+        return preparedStatement.execute() ? 1 : 0;
+    }
+
+    private PreparedStatement execute(MapperStatement mapperStatement, Object[] params) {
+        Connection connection = null;
+        try {
+            //获取连接
+            connection = getConnection();
+            //获取sql并解析
+            String sql = mapperStatement.getSql();
+            Map<String,Object> boundSql = getBoundSql(sql);
+            sql = (String)boundSql.get("sql");
+            List<ParameterMapping> parameterMappings = (List<ParameterMapping>)boundSql.get("parameterMappings");
+
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+            //获取参数类型
+            String parameterType = mapperStatement.getParameterType();
+            Class parameterClass = Class.forName(parameterType);
+
+            //设置参数
+            for(int i=0; i<parameterMappings.size(); i++){
+                ParameterMapping parameterMapping = parameterMappings.get(i);
+
+                //根据name获取对应的Field字段信息
+                Field field = parameterClass.getDeclaredField(parameterMapping.getContent());
+                //取消安全检查
+                field.setAccessible(true);
+                //不是很理解params[0]
+                Object value = field.get(params[0]);
+                preparedStatement.setObject(i+1,value);
+            }
+
+            return preparedStatement;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -107,7 +162,7 @@ public class SimpleExecutor implements Executor {
                 // 字段的值
                 Object value = resultSet.getObject(columnName);
 
-                //使用反射或者内省，根据数据库表和实体的对应关系，完成封装
+                //使用反射，根据数据库表和实体的对应关系，完成封装
                 PropertyDescriptor propertyDescriptor = new PropertyDescriptor(columnName, resultClass);
                 Method writeMethod = propertyDescriptor.getWriteMethod();
                 writeMethod.invoke(o, value);

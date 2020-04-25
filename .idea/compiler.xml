@@ -13,6 +13,7 @@
     <bytecodeTargetLevel>
       <module name="IPersistence" target="1.8" />
       <module name="IPersistence_test" target="1.8" />
+      <module name="mybatis_quickStart" target="1.8" />
     </bytecodeTargetLevel>
   </component>
 </project>

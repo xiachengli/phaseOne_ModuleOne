@@ -12,9 +12,12 @@ public class MapperStatement {
     private String parameterType;
     //sql语句
     private String sql;
+    //sql类型
+    private String sqlCommand;
 
     public String getId() {
         return id;
+
     }
 
     public void setId(String id) {
@@ -44,4 +47,13 @@ public class MapperStatement {
     public void setSql(String sql) {
         this.sql = sql;
     }
+
+    public String getSqlCommand() {
+        return sqlCommand;
+    }
+
+    public void setSqlCommand(String sqlCommand) {
+        this.sqlCommand = sqlCommand;
+    }
+
 }
