@@ -8,10 +8,10 @@
 
 |            元素             |        功能        |
 | :-------------------------: | :----------------: |
-|            <if>             | 单条件分支判断语句 |
-| <choose> <when> <otherwise> | 多条件分支判断语句 |
-|    <trim> <where> <set>     |        过滤        |
-|          <foreach>          | 循环语句，遍历集合 |
+|            if               | 单条件分支判断语句 |
+|       choose when otherwise | 多条件分支判断语句 |
+|          trim where set     |        过滤        |
+|          foreach            | 循环语句，遍历集合 |
 
 ​	原理：根据表达式的值动态拼接SQL。
 
